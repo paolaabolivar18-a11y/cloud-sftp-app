@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud Storage SFTP - Sistema de Archivos</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f172a; color: #f8fafc; margin: 0; padding: 40px 20px; }
+        .container { max-width: 700px; margin: auto; background: #1e293b; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        h1 { font-size: 24px; color: #38bdf8; text-align: center; margin-bottom: 20px; }
+        .badge { background: #0284c7; color: white; padding: 4px 10px; border-radius: 20px; font-size: 12px; display: inline-block; margin-bottom: 20px; }
+        .upload-card { border: 2px dashed #475569; padding: 25px; text-align: center; border-radius: 8px; margin-bottom: 25px; }
+        input[type="file"] { margin-bottom: 15px; }
+        button { background: #0284c7; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #0369a1; }
+        ul { list-style: none; padding: 0; }
+        li { background: #334155; margin-bottom: 10px; padding: 12px 15px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; }
+        a { color: #38bdf8; text-decoration: none; font-weight: 500; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>☁️ Almacenamiento Seguro en la Nube (SFTP)</h1>
+        <div style="text-align: center;"><span class="badge">Estado del Servidor: Conectado (SFTP Activo)</span></div>
+        
+        <div class="upload-card">
+            <input type="file" id="fileInput"><br>
+            <button onclick="subirArchivo()">Subir Archivo a la Nube</button>
+            <p id="statusMsg" style="margin-top: 10px; font-size: 14px; color: #4ade80;"></p>
+        </div>
+
+        <h3>Archivos Guardados y Compartibles</h3>
+        <ul id="fileList"></ul>
+    </div>
+
+    <script>
+        async function cargarArchivos() {
+            const res = await fetch('/api/files');
+            const files = await res.json();
+            const list = document.getElementById('fileList');
+            list.innerHTML = '';
+            files.forEach(f => {
+                list.innerHTML += `<li><span>📄 ${f.name}</span> <a href="${f.url}" target="_blank">Compartir / Descargar</a></li>`;
+            });
+        }
+
+        async function subirArchivo() {
+            const input = document.getElementById('fileInput');
+            if (!input.files[0]) return alert('Selecciona un archivo');
+            
+            const formData = new FormData();
+            formData.append('archivo', input.files[0]);
+
+            document.getElementById('statusMsg').innerText = 'Transfiriendo archivo de forma segura...';
+            const res = await fetch('/api/files/upload', { method: 'POST', body: formData });
+            const data = await res.json();
+            
+            document.getElementById('statusMsg').innerText = data.message;
+            input.value = '';
+            cargarArchivos();
+        }
+
+        cargarArchivos();
+    </script>
+</body>
+</html>

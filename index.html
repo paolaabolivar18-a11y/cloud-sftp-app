@@ -14,8 +14,9 @@
         button { background: #0284c7; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
         button:hover { background: #0369a1; }
         ul { list-style: none; padding: 0; }
-        li { background: #334155; margin-bottom: 10px; padding: 12px 15px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; }
-        a { color: #38bdf8; text-decoration: none; font-weight: 500; }
+        li { background: #334155; margin-bottom: 10px; padding: 12px 15px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; word-break: break-all; }
+        a { background: #0389c7; color: white; text-decoration: none; font-weight: 500; padding: 6px 12px; border-radius: 5px; font-size: 13px; margin-left: 10px; }
+        a:hover { background: #0284c7; }
     </style>
 </head>
 <body>
@@ -35,29 +36,48 @@
 
     <script>
         async function cargarArchivos() {
-            const res = await fetch('/api/files');
-            const files = await res.json();
-            const list = document.getElementById('fileList');
-            list.innerHTML = '';
-            files.forEach(f => {
-                list.innerHTML += `<li><span>📄 ${f.name}</span> <a href="${f.url}" target="_blank">Compartir / Descargar</a></li>`;
-            });
+            try {
+                const res = await fetch('/api/files');
+                const files = await res.json();
+                const list = document.getElementById('fileList');
+                list.innerHTML = '';
+
+                if (files.length === 0) {
+                    list.innerHTML = '<li style="justify-content: center; color: #94a3b8;">No hay archivos guardados aún.</li>';
+                    return;
+                }
+
+                files.forEach(f => {
+                    list.innerHTML += `
+                        <li>
+                            <span>📄 ${f.name}</span> 
+                            <a href="${f.url}" target="_blank" download>Descargar / Abrir</a>
+                        </li>`;
+                });
+            } catch (err) {
+                console.error('Error al cargar archivos:', err);
+            }
         }
 
         async function subirArchivo() {
             const input = document.getElementById('fileInput');
-            if (!input.files[0]) return alert('Selecciona un archivo');
+            if (!input.files[0]) return alert('Por favor, selecciona un archivo primero.');
             
             const formData = new FormData();
             formData.append('archivo', input.files[0]);
 
-            document.getElementById('statusMsg').innerText = 'Transfiriendo archivo de forma segura...';
-            const res = await fetch('/api/files/upload', { method: 'POST', body: formData });
-            const data = await res.json();
+            document.getElementById('statusMsg').innerText = 'Transfiriendo archivo de forma segura via SFTP...';
             
-            document.getElementById('statusMsg').innerText = data.message;
-            input.value = '';
-            cargarArchivos();
+            try {
+                const res = await fetch('/api/files/upload', { method: 'POST', body: formData });
+                const data = await res.json();
+                
+                document.getElementById('statusMsg').innerText = data.message;
+                input.value = '';
+                cargarArchivos();
+            } catch (err) {
+                document.getElementById('statusMsg').innerText = 'Error al subir el archivo.';
+            }
         }
 
         cargarArchivos();
